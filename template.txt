@@ -1,0 +1,58 @@
+#include <arduino.h>
+#include <FastLED.h>
+
+#define LED_PIN     14
+#define COLOR_ORDER GRB
+#define CHIPSET     WS2812B
+#define kMatrixWidth   19
+#define kMatrixHeight  19
+#define NUM_LEDS (kMatrixWidth * kMatrixHeight)
+
+#define IS_SIMULATOR 0// Set to 0 when uploading to real ESP32
+
+CRGB leds[NUM_LEDS];
+
+// ==========================================================
+// MATRIX MAPPING (Serpentine) (DO NOT MODIFY THIS FUNCTION)
+// ==========================================================
+// top left corner has index (0,0)
+uint16_t XY(uint8_t x, uint8_t y) {
+  if (x >= kMatrixWidth || y >= kMatrixHeight) return NUM_LEDS;
+
+  if (IS_SIMULATOR) {
+    // Standard Layout for Wokwi Matrix
+    return (y * kMatrixWidth) + x;
+  } else {
+    // Serpentine Layout for Physical Hardware
+    if (y % 2 == 0) return (y * kMatrixWidth) + x;
+    return (y * kMatrixWidth) + (18  - x);
+  }
+}
+
+
+//ADD ANY OTHER HELPER FUNCTIONS HERE:
+
+
+
+// ==========================================================
+// SETUP
+// ==========================================================
+void setup() {
+  delay(1000);
+  FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+  // Clear all LEDs initially
+  FastLED.clear();
+  FastLED.show();
+  
+  
+  //
+}
+
+
+
+void loop() {
+  
+  //ADD YOUR LOGIC HERE
+
+}
+

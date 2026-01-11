@@ -1,0 +1,119 @@
+
+#include <arduino.h>
+#include <FastLED.h>
+
+#define LED_PIN     14
+#define COLOR_ORDER GRB
+#define CHIPSET     WS2812B
+#define kMatrixWidth   19
+#define kMatrixHeight  19
+#define NUM_LEDS (kMatrixWidth * kMatrixHeight)
+
+CRGB leds[NUM_LEDS];
+uint8_t gHue = 0; 
+int16_t scrollPos = -32; 
+
+// ==========================================================
+// 13-PIXEL HIGH ERC BITMAP  (32-bit width)
+// Layout per row (left → right):
+// [ E:7 bits ][ space:3 ][ R:7 bits ][ space:3 ][ C:7 bits ]
+// ==========================================================
+
+const uint32_t ERC_WORD[] = {
+
+  // ─── Top bars (2 rows thick)
+  0b11111110001111111000011111100000, // Row 0
+  0b11111110001111111000011111100000, // Row 1
+
+  // ─── Upper verticals
+  0b10000000001000001000100000000000, // Row 2
+  0b10000000001000001000100000000000, // Row 3
+  0b10000000001000001000100000000000, // Row 4
+
+  // ─── Middle bars (2 rows thick)
+  0b11111100001111110000100000000000, // Row 5
+  0b11111100001111110000100000000000, // Row 6
+
+  // ─── R diagonal leg + lower verticals
+  0b10000000001001000000100000000000, // Row 7
+  0b10000000001000100000100000000000, // Row 8
+  0b10000000001000010000100000000000, // Row 9
+  0b10000000001000001000100000000000, // Row10
+
+  // ─── Bottom bars (2 rows thick)
+  0b11111110001000001000011111100000, // Row11
+  0b11111110001000001000011111100000, // Row12
+
+  // Padding (unused)
+  0b00000000000000000000000000000000, // Row13
+  0b00000000000000000000000000000000, // Row14
+  0b00000000000000000000000000000000  // Row15
+};
+
+const uint8_t FONT_HEIGHT = 13;
+
+// ==========================================================
+// MATRIX MAPPING (Serpentine)
+// ==========================================================
+uint16_t XY(uint8_t x, uint8_t y) {
+  if (x >= kMatrixWidth || y >= kMatrixHeight) return NUM_LEDS;
+
+  if (y % 2 == 0) return (y * kMatrixWidth) + x;
+  return (y * kMatrixWidth) + (kMatrixWidth - 1 - x);
+}
+
+// ==========================================================
+// DRAW SCROLLING WORD
+// ==========================================================
+void drawScrollingWord(int16_t xOffset) {
+  FastLED.clear();
+  
+  // Auto center vertically in 19x19 frame
+  uint8_t yOffset = (kMatrixHeight - FONT_HEIGHT) / 2;   // = 3
+
+  for (uint8_t row = 0; row < FONT_HEIGHT; row++) {
+    for (uint8_t col = 0; col < 32; col++) {
+      int16_t targetX = col + xOffset;
+      
+      if (targetX >= 0 && targetX < kMatrixWidth) {
+        if (ERC_WORD[row] & (0x80000000 >> col)) {
+          uint8_t pixelHue = gHue + (col * 4) + (row * 2);
+          leds[XY(targetX, yOffset + row)] = CHSV(pixelHue, 255, 255);
+        }
+      }
+    }
+  }
+  FastLED.show();
+}
+
+// ==========================================================
+// SETUP
+// ==========================================================
+void setup() {
+  delay(1000);
+
+  FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS)
+         .setCorrection(TypicalLEDStrip);
+
+  FastLED.setBrightness(40);
+}
+
+// ==========================================================
+// LOOP
+// ==========================================================
+void loop() {
+  drawScrollingWord(scrollPos);
+
+  // Rainbow animation speed
+  EVERY_N_MILLISECONDS(20) { 
+    gHue++; 
+  }
+
+  // Scroll speed
+  EVERY_N_MILLISECONDS(60) { 
+    scrollPos--; 
+    if (scrollPos <-32 ) {
+      scrollPos = kMatrixWidth;
+    }
+  }
+}

@@ -1,0 +1,92 @@
+#include <arduino.h>
+#include <FastLED.h>
+
+#define LED_PIN     14
+#define COLOR_ORDER GRB
+#define CHIPSET     WS2812B
+#define kMatrixWidth   19
+#define kMatrixHeight  19
+#define NUM_LEDS (kMatrixWidth * kMatrixHeight)
+#define IS_SIMULATOR 1 // Set to 0 when uploading to real ESP32
+
+CRGB leds[NUM_LEDS];
+
+// ==========================================================
+// MATRIX MAPPING (Serpentine)
+// ==========================================================
+
+// top left corner has index (0,0)
+uint16_t XY(uint8_t x, uint8_t y) {
+  if (x >= kMatrixWidth || y >= kMatrixHeight) return NUM_LEDS;
+
+  if (IS_SIMULATOR) {
+    // Standard Layout for Wokwi Matrix
+    return (y * kMatrixWidth) + x;
+  } else {
+    // Serpentine Layout for Physical Hardware
+    if (y % 2 == 0) return (y * kMatrixWidth) + x;
+    return (y * kMatrixWidth) + (18  - x);
+  }
+}
+
+// 19x19 Bitmask (Packed into 32-bit integers)
+// We only use the first 19 bits of each 32-bit row.
+// 19x19 Bitmask (Packed into 32-bit integers)
+const uint32_t erc_logo [] = { // Row 1
+  0b000000001111000000000000000000000, // Row 0
+  0b000000010000100000000000000000000, //row 1
+  0b000000100000010000000000000000000,// eow 2
+  0b000000101001010000000000000000000,// row 3
+  0b000000100000010000000000000000000, // Row 4
+  0b000000110000110000000000000000000, // Row 5 // 
+  0b000000001111000000000000000000000, // Row 6
+  0b000000111001110000000000000000000, // Row 7
+  0b000001010000101000000000000000000, // ROW 8
+  0b000001010000101000000000000000000, // ROW 9
+  0b000001010000101000000000000000000, // Row 10
+  0b000001010000101000000000000000000, // Row 11
+  0b000001011001101000000000000000000, // Row 12
+  0b000000111001110000000000000000000, // Row 13
+  0b000000001111000000000000000000000, // Row 14
+  0b000000001111000000000000000000000, // Row 15
+  0b000000000000000000000000000000000, // Row 16
+  0b000000001111000000000000000000000, // Row 17
+  0b000000000110000000000000000000000, // Row 18
+};
+
+
+void draw_fig(CRGB color) {
+  FastLED.clear();
+  
+  for (uint8_t row = 0; row < kMatrixHeight; row++) {
+    for (uint8_t col = 0; col < kMatrixWidth; col++) {
+      // 0x80000000 is the leftmost bit in a 32-bit number.
+      // We shift it right 'col' times to check the bit at that horizontal position.
+      if (erc_logo[row] & (0x80000000 >> col)) {
+        // XY(col, row) ensures it maps correctly to your 19x19 serpentine grid.
+        leds[XY(col, row)] = color;
+      }
+    }
+  }
+  FastLED.show();
+}
+
+// ==========================================================
+// SETUP
+// ==========================================================
+void setup() {
+  delay(1000);
+
+  FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+
+  FastLED.setBrightness(255);
+}
+
+// ==========================================================
+// LOOP
+// ==========================================================
+void loop() {
+  delay(5);
+  draw_fig(CRGB::Cyan); //or pass CRGB(r-val,g_val,b_val)
+}
+

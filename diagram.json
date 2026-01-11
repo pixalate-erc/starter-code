@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "author": "Gemini",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0 },
+    {
+      "type": "wokwi-neopixel-matrix",
+      "id": "matrix",
+      "top": -300,
+      "left": 150,
+      "attrs": { 
+        "rows": "19", 
+        "cols": "19"
+      }
+    }
+  ],
+  "connections": [
+    [ "esp:GND.1", "matrix:VSS", "black", [ "v0" ] ],
+    [ "esp:5V", "matrix:VCC", "red", [ "v0" ] ],
+    [ "esp:D14", "matrix:DIN", "green", [ "v20", "h100" ] ]
+  ],
+  "dependencies": {}
+}

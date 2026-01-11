@@ -7,7 +7,8 @@
 #define CHIPSET     WS2812B
 #define kMatrixWidth   19
 #define kMatrixHeight  19
-#define NUM_LEDS (kMatrixWidth * kMatrixHeight)
+#define NUM_LEDS (kMatrixWidth * kMatrixHeight)'
+#define IS_SIMULATOR 1 //toggle to 0inorder to run on hardware
 
 CRGB leds[NUM_LEDS];
 uint8_t gHue = 0; 
@@ -53,13 +54,20 @@ const uint32_t ERC_WORD[] = {
 const uint8_t FONT_HEIGHT = 13;
 
 // ==========================================================
-// MATRIX MAPPING (Serpentine)
+// MATRIX MAPPING (Serpentine) (DO NOT MODIFY THIS FUNCTION)
 // ==========================================================
+// top left corner has index (0,0)
 uint16_t XY(uint8_t x, uint8_t y) {
   if (x >= kMatrixWidth || y >= kMatrixHeight) return NUM_LEDS;
 
-  if (y % 2 == 0) return (y * kMatrixWidth) + x;
-  return (y * kMatrixWidth) + (kMatrixWidth - 1 - x);
+  if (IS_SIMULATOR) {
+    // Standard Layout for Wokwi Matrix
+    return (y * kMatrixWidth) + x;
+  } else {
+    // Serpentine Layout for Physical Hardware
+    if (y % 2 == 0) return (y * kMatrixWidth) + x;
+    return (y * kMatrixWidth) + (18  - x);
+  }
 }
 
 // ==========================================================

@@ -8,7 +8,7 @@
 #define kMatrixHeight  19
 #define NUM_LEDS (kMatrixWidth * kMatrixHeight)
 
-#define IS_SIMULATOR 0// Set to 0 when uploading to real ESP32
+#define IS_SIMULATOR 1 // Set to 0 when uploading to real ESP32
 
 CRGB leds[NUM_LEDS];
 
